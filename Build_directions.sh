@@ -1,18 +1,19 @@
 #!/bin/bash
 
 # copy the cheyenne template files
-cp /glade/u/home/pegion/cheyenne*mk fms/mkmf/templates
+cp /glade/u/home/pegion/OM4_config/cheyenne*mk src/mkmf/templates
 mkdir -p build/intel
-cd        build/intel
+cd       build/intel
 # copy my environment file for chyenne
-cp /glade/u/home/pegion/MOM4_cheyenne.intel.env env
+cp /glade/u/home/pegion/OM4_config/OM4_cheyenne.intel.env env
 source env
-mkdir  -r shared/repro
+mkdir  -p shared/repro
 cd        shared/repro
 
 # now build FMS
 ../../../../src/mkmf/bin/list_paths -l ../../../../src/FMS
 ../../../../src/mkmf/bin/mkmf -t ../../../../src/mkmf/templates/cheyenne-intel.mk -p libfms.a -c "-Duse_libMPI -Duse_netCDF" path_names
+make NETCDF=3 REPRO=1 libfms.a -j
 
 #
 cd ../../
@@ -35,6 +36,10 @@ cd       ice_ocean_SIS2/repro/
 # ../../../../src/stochastic_physics/lndp_apply_perts.F90
 # ../../../../src/stochastic_physics/halo_exchange.fv3.F90
 mv path_names path_names.orig
-grep -v unit_tests names.orig | grep -v cellular_automata |grep -v update_ca |grep -v plumes.F90 |grep -v halo_exchange.fv3.F90 |grep -v lndp_apply_perts.F90
+grep -v 'stochastic_physics/unit_tests' path_names.orig | grep -v cellular_automata |grep -v update_ca |grep -v plumes.F90 |grep -v halo_exchange.fv3.F90 |grep -v lndp_apply_perts.F90 > path_names
+rm path_names.orig
 
-../../../../src/mkmf/bin/mkmf -t ../../../../src/mkmf/templates/cheyenne-intel.mk -o '-I../../shared/repro' -p MOM6 -l '-L../../shared/repro -L${ESMF_LIB} -lfms -lesmf' -c '-Duse_AM3_physics -D_USE_LEGACY_LAND_' path_names"
+../../../../src/mkmf/bin/mkmf -t ../../../../src/mkmf/templates/cheyenne-intel.mk -o '-I../../shared/repro' -p MOM6 -l '-L../../shared/repro -L${ESMF_LIBDIR} -lfms -lesmf' -c '-Duse_AM3_physics -D_USE_LEGACY_LAND_' path_names
+make NETCDF=3 REPRO=1 MOM6 -j
+
+# executable will be build/intel/shared/repro/MOM6
